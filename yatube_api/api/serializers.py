@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
+# from rest_framework.validators import UniqueTogetherValidator
 
 from posts.models import Comment, Post, Group, Follow, User
 
@@ -34,6 +35,15 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('user', 'following')
         model = Follow
+#        validators = [
+#            UniqueTogetherValidator(
+#                queryset=Follow.objects.all(),
+#                fields=['user', 'following']
+#            )
+#        ]
+#        С таким кодом не пройдут тесты, т.к. при использовании
+#        UniqueTogetherValidator поле user становится обязательным
+#        в post-запросе, что противоречит заданию
 
     def validate(self, data):
         user = self.context['request'].user

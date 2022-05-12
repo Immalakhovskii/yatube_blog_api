@@ -42,3 +42,18 @@ Accessible when development server activated:
 ```
 python manage.py runserver
 ```
+
+**How to get JWT**
+To recieve JSON Web Token (JWT) send post request wuth following application/json data to http://127.0.0.1:8000/api/v1/jwt/create/
+```
+{
+"username": "string",
+"password": "string"
+}
+```
+JWT lifetime is 1 day, refresh it here http://127.0.0.1:8000/api/v1/jwt/refresh/ with following request
+```
+{
+"refresh": "string"
+}
+```
