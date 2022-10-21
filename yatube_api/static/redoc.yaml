@@ -1,25 +1,48 @@
 openapi: 3.0.2
 info:
-  title: Документация к API проекта Yatube
-  version: v1
+  title: 'Yatube API Documentation'
+  version: ''
+  description: |
+    queries to API start with `/api/v1/`
+
+    # Description
+    Web API service Yatube collects posts which can be commented and assigned to groups. Posts authors can be subscribed (followed) by authorized users
+
+    # User Roles
+    - **Anonymous** — can read (GET) posts, groups and comments
+    - **Authenticated user** (`user`) — has same GET permissions as **Anonymous** and also can create (POST) posts, update (PUT & PATCH) own posts, comment (POST) own and others posts, update (PUT & PATCH) and delete (DEL) own comments
+
+tags:
+  - name: Posts
+    description: Requests related to posts
+  - name: Comments
+    description: Requests related to comments to posts
+  - name: Groups
+    description: Requests related to groups
+  - name: Follows
+    description: Requests related to follows (subscriptions to authors)
+  - name: Auth
+    description: Requests related to JSON Web Tokens (JWT)
+
 paths:
   /api/v1/posts/:
     get:
-      operationId: Получение публикаций
-      description: >-
-        Получить список всех публикаций. При указании параметров limit и offset
-        выдача должна работать с пагинацией.
+      tags:
+        - Posts
+      operationId: Get posts
+      description: |
+        Get posts list. With limit and offset parameters response must work with pagination
       parameters:
         - name: limit
           required: false
           in: query
-          description: Количество публикаций на страницу
+          description: Posts by page
           schema:
             type: integer
         - name: offset
           required: false
           in: query
-          description: Номер страницы после которой начинать выдачу
+          description: Page number to start response
           schema:
             type: integer
       responses:
@@ -31,7 +54,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/GetPost'
               examples:
-                Ответ с пагинацией:
+                Response with pagination:
                   value:
                     count: 123
                     next: http://api.example.org/accounts/?offset=400&limit=100
@@ -44,14 +67,13 @@ paths:
                         pub_date: 2021-10-14T20:41:29.648Z
                         image: string
                         group: 0            
-          description: Удачное выполнение запроса без пагинации
-      tags:
-        - api
+          description: Successful request without pagination
     post:
-      operationId: Создание публикации
-      description: >-
-        Добавление новой публикации в коллекцию публикаций. Анонимные запросы
-        запрещены.
+      tags:
+        - Posts
+      operationId: Create post
+      description: |
+        Create new publication. Anonymous requests forbidden
       parameters: []
       requestBody:
         content:
@@ -70,7 +92,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Post'
-          description: Удачное выполнение запроса
+          description: Successful request
         '400':
           content:
             application/json:
@@ -78,27 +100,27 @@ paths:
                 '400':
                   value:
                     text:
-                      - Обязательное поле.
-          description: Отсутствует обязательное поле в теле запроса
+                      - Required field
+          description: Required field missing or invalid data passed
         '401':
           content:
             application/json:
               examples:
                 '401':
                   value:
-                    detail: Учетные данные не были предоставлены.
-          description: Запрос от имени анонимного пользователя
-      tags:
-        - api
+                    detail: Credentials were not provided
+          description: Request from anonymous
   '/api/v1/posts/{id}/':
     get:
-      operationId: Получение публикации
-      description: Получение публикации по id.
+      tags:
+        - Posts
+      operationId: Get post
+      description: Get post by id
       parameters:
         - name: id
           in: path
           required: true
-          description: id публикации
+          description: post id
           schema:
             type: integer
       responses:
@@ -107,27 +129,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Post'
-          description: Удачное выполнение запроса
+          description: Successful request
         '404':
           content:
             application/json:
               examples:
                 '404':
                   value:
-                    detail: Страница не найдена.
-          description: Попытка запроса несуществующей публикации
-      tags:
-        - api
+                    detail: Page not found
+          description: Post with given id not exists
     put:
-      operationId: Обновление публикации
-      description: >-
-        Обновление публикации по id. Обновить публикацию может только автор
-        публикации. Анонимные запросы запрещены.
+      tags:
+        - Posts
+      operationId: Update post
+      description: |
+        Update post by id. Only author can update post. Anonymous requests forbidden
       parameters:
         - name: id
           in: path
           required: true
-          description: id публикации
+          description: post id
           schema:
             type: integer
       requestBody:
@@ -147,7 +168,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Post'
-          description: Удачное выполнение запроса
+          description: Successful request
         '400':
           content:
             application/json:
@@ -155,44 +176,43 @@ paths:
                 '400':
                   value:
                     text:
-                      - Обязательное поле.
-          description: Отсутствует обязательное поле в теле запроса
+                      - Required field
+          description: Required field missing or invalid data passed
         '401':
           content:
             application/json:
               examples:
                 '401':
                   value:
-                    detail: Учетные данные не были предоставлены.
-          description: Запрос от имени анонимного пользователя
+                    detail: Credentials were not provided
+          description: Request from anonymous
         '403':
           content:
             application/json:
               examples:
                 '403':
                   value:
-                    detail: У вас недостаточно прав для выполнения данного действия.
-          description: Попытка изменения чужого контента
+                    detail: Request forbidden
+          description: Another's content can't be changed
         '404':
           content:
             application/json:
               examples:
                 '404':
                   value:
-                    detail: Страница не найдена.
-          description: Попытка изменения несуществующей публикации
-      tags:
-        - api
+                    detail: Page not found
+          description: Post with given id not exists
     patch:
-      operationId: Частичное обновление публикации
-      description: >-
-        Частичное обновление публикации по id. Обновить публикацию может только
-        автор публикации. Анонимные запросы запрещены.
+      tags:
+        - Posts
+      operationId: Partial post update
+      description: |
+        Partial post update by id. Only author can update post. Anonymous requests forbidden
       parameters:
         - name: id
           in: path
           required: true
-          description: id публикации
+          description: post id
           schema:
             type: integer
       requestBody:
@@ -212,83 +232,82 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Post'
-          description: Удачное выполнение запроса
+          description: Successful request
         '401':
           content:
             application/json:
               examples:
                 '401':
                   value:
-                    detail: Учетные данные не были предоставлены.
-          description: Запрос от имени анонимного пользователя
+                    detail: Credentials were not provided
+          description: Request from anonymous
         '403':
           content:
             application/json:
               examples:
                 '403':
                   value:
-                    detail: У вас недостаточно прав для выполнения данного действия.
-          description: Попытка изменения чужого контента
+                    detail: Request forbidden
+          description: Another's content can't be changed
         '404':
           content:
             application/json:
               examples:
                 '404':
                   value:
-                    detail: Страница не найдена.
-          description: Попытка изменения несуществующей публикации
-      tags:
-        - api
+                    detail: Page not found
+          description: Post with given id not exists
     delete:
-      operationId: Удаление публикации
-      description: >-
-        Удаление публикации по id. Удалить публикацию может только автор
-        публикации. Анонимные запросы запрещены.
+      tags:
+        - Posts
+      operationId: Delete post
+      description: |
+        Delete post by id. Only author can delete post. Anonymous requests forbidden
       parameters:
         - name: id
           in: path
           required: true
-          description: id публикации
+          description: post id
           schema:
             type: integer
       responses:
         '204':
-          description: Удачное выполнение запроса
+          description: Successful request
         '401':
           content:
             application/json:
               examples:
                 '401':
                   value:
-                    detail: Учетные данные не были предоставлены.
-          description: Запрос от имени анонимного пользователя
+                    detail: Credentials were not provided
+          description: Request from anonymous
         '403':
           content:
             application/json:
               examples:
                 '403':
                   value:
-                    detail: У вас недостаточно прав для выполнения данного действия.
-          description: Попытка изменения чужого контента
+                    detail: Request forbidden
+          description: Another's content can't be changed
         '404':
           content:
             application/json:
               examples:
                 '404':
                   value:
-                    detail: Страница не найдена.
-          description: Попытка удаления несуществующей публикации
-      tags:
-        - api
+                    detail: Page not found
+          description: Post with given id not exists
   '/api/v1/posts/{post_id}/comments/':
     get:
-      operationId: Получение комментариев
-      description: Получение всех комментариев к публикации.
+      tags:
+        - Comments
+      operationId: Get comments
+      description: Get comment list to post
       parameters:
         - name: post_id
           in: path
           required: true
-          description: id публикации
+          description: post id
           schema:
             type: integer
       responses:
@@ -299,7 +318,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Comment'
-          description: Удачное выполнение запроса
+          description: Successful request
         '404':
           content:
             application/json:
@@ -307,19 +326,19 @@ paths:
                 '404':
                   value:
                     {
-                    "detail": "Страница не найдена."
+                    "detail": "Page not found"
                     }
-          description: Получение списка комментариев к несуществующей публикации
-      tags:
-        - api
+          description: Post with given id not exists
     post:
-      operationId: Добавление комментария
-      description: Добавление нового комментария к публикации. Анонимные запросы запрещены.
+      tags:
+        - Comments
+      operationId: Create comment
+      description: Create comment to post. Anonymous requests forbidden
       parameters:
         - name: post_id
           in: path
           required: true
-          description: id публикации
+          description: post id
           schema:
             type: integer
       requestBody:
@@ -339,7 +358,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
-          description: Удачное выполнение запроса
+          description: Successful request
         '400':
           content:
             application/json:
@@ -347,41 +366,41 @@ paths:
                 '400':
                   value:
                     text:
-                      - Обязательное поле.
-          description: Отсутствует обязательное поле в теле запроса
+                      - Required field
+          description: Required field missing or invalid data passed
         '401':
           content:
             application/json:
               examples:
                 '401':
                   value:
-                    detail: Учетные данные не были предоставлены.
-          description: Запрос от имени анонимного пользователя
+                    detail: Credentials were not provided
+          description: Request from anonymous
         '404':
           content:
             application/json:
               examples:
                 '404':
                   value:
-                    detail: Страница не найдена.
-          description: Попытка добавить комментарий к несуществующей публикации
-      tags:
-        - api
+                    detail: Page not found
+          description: Post with given id not exists
   '/api/v1/posts/{post_id}/comments/{id}/':
     get:
-      operationId: Получение комментария
-      description: Получение комментария к публикации по id.
+      tags:
+        - Comments
+      operationId: Get comment
+      description: Get comment by id
       parameters:
         - name: post_id
           in: path
           required: true
-          description: id публикации
+          description: post id
           schema:
             type: integer
         - name: id
           in: path
           required: true
-          description: id комментария
+          description: comment id
           schema:
             type: integer
       responses:
@@ -390,35 +409,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
-          description: Удачное выполнение запроса
+          description: Successful request
         '404':
           content:
             application/json:
               examples:
                 '404':
                   value:
-                    detail: Страница не найдена.
-          description: >-
-            Попытка запросить несуществующий комментарий или к несуществующей
-            публикации
-      tags:
-        - api
+                    detail: Page not foud
+          description: |
+            Post with given id not exists or comment with given id not exists
     put:
-      operationId: Обновление комментария
-      description: >-
-        Обновление комментария к публикации по id. Обновить комментарий может
-        только автор комментария. Анонимные запросы запрещены.
+      tags:
+        - Comments
+      operationId: Update comment
+      description: |
+        Update comment to post by id. Only author can update comment. Anonymous requests forbidden
       parameters:
         - name: post_id
           in: path
           required: true
-          description: id публикации
+          description: post id
           schema:
             type: integer
         - name: id
           in: path
           required: true
-          description: id комментария
+          description: comment id
           schema:
             type: integer
       requestBody:
@@ -438,7 +455,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
-          description: Удачное выполнение запроса
+          description: Successful request
         '400':
           content:
             application/json:
@@ -446,52 +463,50 @@ paths:
                 '400':
                   value:
                     text:
-                      - Обязательное поле.
-          description: Отсутствует обязательное поле в теле запроса
+                      - Required field
+          description: Required field missing or invalid data passed
         '401':
           content:
             application/json:
               examples:
                 '401':
                   value:
-                    detail: Учетные данные не были предоставлены.
-          description: Запрос от имени анонимного пользователя
+                    detail: Credentials were not provided
+          description: Request from anonymous
         '403':
           content:
             application/json:
               examples:
                 '403':
                   value:
-                    detail: У вас недостаточно прав для выполнения данного действия.
-          description: Попытка изменения чужого контента
+                    detail: Request forbidden
+          description: Another's content can't be changed
         '404':
           content:
             application/json:
               examples:
                 '404':
                   value:
-                    detail: Страница не найдена.
-          description: >-
-            Попытка изменить несуществующий комментарий или к несуществующей
-            публикации
-      tags:
-        - api
+                    detail: Page not found
+          description: |
+            Post with given id not exists or comment with given id not exists
     patch:
-      operationId: Частичное обновление комментария
-      description: >-
-        Частичное обновление комментария к публикации по id. Обновить
-        комментарий может только автор комментария. Анонимные запросы запрещены.
+      tags:
+        - Comments
+      operationId: Partial comment update
+      description: |
+        Partial update of a comment to post by id. Only author can update comment. Anonymous requests forbidden
       parameters:
         - name: post_id
           in: path
           required: true
-          description: id публикации
+          description: post id
           schema:
             type: integer
         - name: id
           in: path
           required: true
-          description: id комментария
+          description: comment id
           schema:
             type: integer
       requestBody:
@@ -511,88 +526,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
-          description: Удачное выполнение запроса
+          description: Successful request
         '401':
           content:
             application/json:
               examples:
                 '401':
                   value:
-                    detail: Учетные данные не были предоставлены.
-          description: Запрос от имени анонимного пользователя
+                    detail: Credentials were not provided
+          description: Request from anonymous
         '403':
           content:
             application/json:
               examples:
                 '403':
                   value:
-                    detail: У вас недостаточно прав для выполнения данного действия.
-          description: Попытка изменения чужого контента
+                    detail: Request forbidden
+          description: Another's content can't be changed
         '404':
           content:
             application/json:
               examples:
                 '404':
                   value:
-                    detail: Страница не найдена.
-          description: >-
-            Попытка изменить несуществующий комментарий или к несуществующей
-            публикации
-      tags:
-        - api
+                    detail: Page not found
+          description: |
+            Post with given id not exists or comment with given id not exists
     delete:
-      operationId: Удаление комментария
-      description: >-
-        Удаление комментария к публикации по id. Обновить комментарий может
-        только автор комментария. Анонимные запросы запрещены.
+      tags:
+        - Comments
+      operationId: Delete comment
+      description: |
+        Delete comment to post by id. Only author can delete comment. Anonymous requests forbidden
       parameters:
         - name: post_id
           in: path
           required: true
-          description: id публикации
+          description: post id
           schema:
             type: integer
         - name: id
           in: path
           required: true
-          description: id комментария
+          description: comment id
           schema:
             type: integer
       responses:
         '204':
-          description: Удачное выполнение запроса
+          description: Successful request
         '401':
           content:
             application/json:
               examples:
                 '401':
                   value:
-                    detail: Учетные данные не были предоставлены.
-          description: Запрос от имени анонимного пользователя
+                    detail: Credentials were not provided
+          description: Request from anonymous
         '403':
           content:
             application/json:
               examples:
                 '403':
                   value:
-                    detail: У вас недостаточно прав для выполнения данного действия.
-          description: Попытка изменения чужого контента
+                    detail: Request forbidden
+          description: Another's content can't be changed
         '404':
           content:
             application/json:
               examples:
                 '404':
                   value:
-                    detail: Страница не найдена.
-          description: >-
-            Попытка удалить несуществующий комментарий или к несуществующей
-            публикации
-      tags:
-        - api
-  /api/v1/groups/:
+                    detail: Page not found
+          description: |
+            Post with given id not exists or comment with given id not exists
+
+  '/api/v1/groups/':
     get:
-      operationId: Список сообществ
-      description: Получение списка доступных сообществ.
+      tags:
+        - Groups
+      operationId: Get groups
+      description: Get groups list
       parameters: []
       responses:
         '200':
@@ -602,13 +615,13 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Group'
-          description: Удачное выполнение запроса
-      tags:
-        - api
+          description: Successful request
   '/api/v1/groups/{id}/':
     get:
-      operationId: Информация о сообществе
-      description: Получение информации о сообществе по id.
+      tags:
+        - Groups
+      operationId: Get group
+      description: Get group info by id
       parameters:
         - name: id
           in: path
@@ -622,28 +635,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Group'
-          description: Удачное выполнение запроса
+          description: Successful request
         '404':
           content:
             application/json:
               examples:
                 '404':
                   value:
-                    detail: Страница не найдена.
-          description: Попытка запроса несуществующего сообщества
-      tags:
-        - api
-  /api/v1/follow/:
+                    detail: Page not found
+          description: Group with given id not exists
+
+  '/api/v1/follow/':
     get:
-      operationId: Подписки
-      description: >-
-        Возвращает все подписки пользователя, сделавшего запрос. Анонимные запросы запрещены.
+      tags:
+        - Follows
+      operationId: Get follows
+      description: |
+        Get all follows of request user. Anonymous requests forbidden
       parameters:
         - name: search
           required: false
           in: query
-          description: >-
-            Возможен поиск по подпискам по параметру search
+          description: |
+            Search by parameter search allowed
           schema:
             type: string
       responses:
@@ -654,22 +668,21 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Follow'
-          description: Удачное выполнение запроса
+          description: Successful request
         '401':
           content:
             application/json:
               examples:
                 '401':
                   value:
-                    detail: Учетные данные не были предоставлены.
-          description: Запрос от имени анонимного пользователя
-      tags:
-        - api
+                    detail: Credentials were not provided
+          description: Request from anonymous
     post:
-      operationId: Подписка
-      description: >-
-        Подписка пользователя от имени которого сделан запрос на пользователя
-        переданного в теле запроса. Анонимные запросы запрещены.
+      tags:
+        - Follows
+      operationId: Follow user
+      description: |
+        Create follow of request user to user whom username passed in request. Anonymous requests forbidden
       parameters: []
       requestBody:
         content:
@@ -688,7 +701,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Follow'
-          description: Удачное выполнение запроса
+          description: Successful request
         '400':
           content:
             application/json:
@@ -696,32 +709,32 @@ paths:
                 '400':
                   value:
                     following:
-                      - Обязательное поле.
-                Пользователь не существует:
+                      - Required field
+                User not Exists:
                   value:
                     following:
-                      - Объект с username=... не существует.
-                Подписка на себя:
+                      - User with given username not exists
+                Self Follow:
                   value:
                     following:
-                      - Нельзя подписаться на самого себя!
-          description: >-
-            Отсутствует обязательное поле в теле запроса или оно не
-            соответствует требованиям
+                      - Can't follow self
+          description: |
+            Required field missing or invalid data passed
         '401':
           content:
             application/json:
               examples:
                 '401':
                   value:
-                    detail: Учетные данные не были предоставлены.
-          description: Запрос от имени анонимного пользователя
-      tags:
-        - api
-  /api/v1/jwt/create/:
+                    detail: Credentials were not provided
+          description: Request from anonymous
+
+  '/api/v1/jwt/create/':
     post:
-      operationId: Получить JWT-токен
-      description: Получение JWT-токена.
+      tags:
+        - Auth
+      operationId: Get JWT token
+      description: Get JWT token
       parameters: []
       requestBody:
         content:
@@ -740,7 +753,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Token'
-          description: Удачное выполнение запроса
+          description: Successful request
         '400':
           content:
             application/json:
@@ -748,10 +761,10 @@ paths:
                 '400':
                   value:
                     username:
-                      - Обязательное поле.
+                      - Required field
                     password:
-                      - Обязательное поле.
-          description: Отсутствует обязательное поле в теле запроса
+                      - Required field
+          description: Required field missing or invalid data passed
         '401':
           content:
             application/json:
@@ -759,13 +772,13 @@ paths:
                 '401':
                   value:
                     detail: No active account found with the given credentials
-          description: Переданная учетная запись не существует
-      tags:
-        - api
+          description: Passed credentials not exist
   /api/v1/jwt/refresh/:
     post:
-      operationId: Обновить JWT-токен
-      description: Обновление JWT-токена.
+      tags:
+        - Auth
+      operationId: Update JWT token
+      description: Update JWT token
       parameters: []
       requestBody:
         content:
@@ -784,7 +797,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenRefresh2'
-          description: Удачное выполнение запроса
+          description: Successful request
         '400':
           content:
             application/json:
@@ -792,8 +805,8 @@ paths:
                 '400':
                   value:
                     refresh:
-                      - Обязательное поле.
-          description: Отсутствует обязательное поле в теле запроса
+                      - Required field
+          description: Required field missing or invalid data passed
         '401':
           content:
             application/json:
@@ -802,13 +815,13 @@ paths:
                   value:
                     detail: Token is invalid or expired
                     code: token_not_valid
-          description: Передан невалидный токен
-      tags:
-        - api
+          description: Invalid token passed
   /api/v1/jwt/verify/:
     post:
-      operationId: Проверить JWT-токен
-      description: Проверка JWT-токена.
+      tags:
+        - Auth
+      operationId: Check JWT token
+      description: Check JWT token
       parameters: []
       requestBody:
         content:
@@ -823,7 +836,7 @@ paths:
               $ref: '#/components/schemas/TokenVerify'
       responses:
         '200':
-          description: Удачное выполнение запроса
+          description: Successful request
         '400':
           content:
             application/json:
@@ -831,8 +844,8 @@ paths:
                 '400':
                   value:
                     token:
-                      - Обязательное поле.
-          description: Отсутствует обязательное поле в теле запроса
+                      - Required field
+          description: Required field missing or invalid data passed
         '401':
           content:
             application/json:
@@ -841,9 +854,7 @@ paths:
                   value:
                     detail: Token is invalid or expired
                     code: token_not_valid
-          description: Передан невалидный токен
-      tags:
-        - api
+          description: Invalid token passed
 components:
   schemas:
     Post:
@@ -851,15 +862,15 @@ components:
       properties:
         id:
           type: integer
-          title: id публикации
+          title: post id
           readOnly: true
         author:
           type: string
-          title: username пользователя
+          title: user username
           readOnly: true
         text:
           type: string
-          title: текст публикации
+          title: post text
         pub_date:
           type: string
           format: date-time
@@ -870,7 +881,7 @@ components:
           nullable: true
         group:
           type: integer
-          title: id сообщества
+          title: group id
           nullable: true
       required:
         - text
@@ -879,15 +890,15 @@ components:
       properties:
         id:
           type: integer
-          title: id публикации
+          title: post id
           readOnly: true
         author:
           type: string
-          title: username пользователя
+          title: user username
           readOnly: true
         text:
           type: string
-          title: текст публикации
+          title: post текст
         pub_date:
           type: string
           format: date-time
@@ -898,29 +909,29 @@ components:
           nullable: true
         group:
           type: integer
-          title: id сообщества
+          title: group id
           nullable: true
     Comment:
       type: object
       properties:
         id:
           type: integer
-          title: id комментария
+          title: comment id
           readOnly: true
         author:
           type: string
-          title: username пользователя
+          title: user username
           readOnly: true
         text:
           type: string
-          title: текст комментария
+          title: comment text
         created:
           type: string
           format: date-time
           readOnly: true
         post:
           type: integer
-          title: id публикации
+          title: post id
           readOnly: true
       required:
         - text
@@ -948,7 +959,7 @@ components:
       properties:
         user:
           type: string
-          title: username владелец токена
+          title: token holder username
           readOnly: true
         following:
           type: string
@@ -967,15 +978,15 @@ components:
         - username
         - password
     Token:
-      title: Токен
+      title: Token
       type: object
       properties:
         refresh:
           type: string
-          title: refresh токен
+          title: refresh token
         access:
           type: string
-          title: access токен
+          title: access token
     TokenRefresh:
       type: object
       properties:
