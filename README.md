@@ -1,5 +1,5 @@
 # Yatube API #
-*This project is an almost exact Django REST Framework implementation of a blogging network Yatube made with Django which can be seen here: https://github.com/Immalakhovskii/yatube_blog_final*
+*This project is an almost exact Django REST Framework implementation of a blogging platform Yatube made with Django which can be seen here: https://github.com/Immalakhovskii/yatube_blog_final*
 ****
 ### Description ###
 Web API service Yatube collects posts which can be commented and assigned to groups. Posts authors can be subscribed (followed) by authorized users. Anonymous user can read posts, groups and comments. Authenticated user has all rights of an anonymous and also can create posts, update own posts, comment own and others posts, update and delete own comments. For authentication Yatube API uses JWT tokens. While project activated full API documentation can be seen here: http://127.0.0.1:8000/redoc/
@@ -35,4 +35,5 @@ Now admin site of the project available at http://127.0.0.1:8000/admin/. API req
 
 ### Get JWT token ###
 
-To recieve JSON Web Token (JWT) send POST request with "username" and "password" to http://127.0.0.1:8000/api/v1/jwt/create/. JWT lasts 1 day refresh it with POST request to http://127.0.0.1:8000/api/v1/jwt/refresh/ with expired token passed in "refresh"
+- To recieve JSON Web Token (JWT) send POST request with "username" and "password" to http://127.0.0.1:8000/api/v1/jwt/create/
+- JWT lasts only 1 day. Refresh it with POST request to http://127.0.0.1:8000/api/v1/jwt/refresh/ with expired token passed in "refresh"
