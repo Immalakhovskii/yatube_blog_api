@@ -31,9 +31,12 @@ python manage.py runserver
 ```
 Now admin site of the project available at http://127.0.0.1:8000/admin/. API requests can be performed by addresses starting with http://127.0.0.1:8000/api/v1/ (see full list of available requests here: http://127.0.0.1:8000/redoc/)
 
+To stop development server press **ctrl (command) + c**
+
 - Actual enviromental variables for the YaMDb stored at yatube_api/.env.example. Safety precautions ignored for the public availability of the project
 
 ### Get JWT token ###
 
 - To recieve JSON Web Token (JWT) send POST request with "username" and "password" to http://127.0.0.1:8000/api/v1/jwt/create/
 - JWT lasts only 1 day. Refresh it with POST request to http://127.0.0.1:8000/api/v1/jwt/refresh/ with expired token passed in "refresh"
+- Token must be passed with **Bearer** header
