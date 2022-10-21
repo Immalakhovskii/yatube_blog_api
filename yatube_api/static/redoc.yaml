@@ -10,7 +10,7 @@ info:
 
     # User Roles
     - **Anonymous** — can read (GET) posts, groups and comments
-    - **Authenticated user** (`user`) — has same GET permissions as **Anonymous** and also can create (POST) posts, update (PUT & PATCH) own posts, comment (POST) own and others posts, update (PUT & PATCH) and delete (DEL) own comments
+    - **Authenticated user** (`user`) — has same GET permissions as **Anonymous** and also can create (POST) posts, update (PUT & PATCH) own posts, comment (POST) own and others posts, update (PUT & PATCH) and delete (DEL) own comments, read (GET) and create (POST) follows on post's authors
 
 tags:
   - name: Posts
